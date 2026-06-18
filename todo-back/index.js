@@ -60,7 +60,7 @@ app.get("/api/todos", (req, res, next) => {
 });
 
 //POST
-app.post("/api/todos", (req, res) => {
+app.post("/api/todos", (req, res, next) => {
   const body = req.body;
 
   if (!body.todo) res.status(400).json({ error: "todo can not be empty" });
