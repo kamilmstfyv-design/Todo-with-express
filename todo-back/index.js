@@ -11,7 +11,7 @@ app.use(express.static("dist"));
 mongoose.set("strictQuery", false);
 
 mongoose
-  .connect(process.env.MONGODBS_URI, { family: 4 })
+  .connect(process.env.MONGODB_URI, { family: 4 })
   .then(() => {
     console.log("connected succes");
   })
