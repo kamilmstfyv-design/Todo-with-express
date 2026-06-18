@@ -1,10 +1,43 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static("dist"));
+
+mongoose.set("strictQuery", false);
+
+mongoose
+  .connect(process.env.MONGODBS_URI, { family: 4 })
+  .then(() => {
+    console.log("connected succes");
+  })
+  .catch((error) => {
+    console.log(error, "somethink wrong");
+  });
+
+const todoSchema = new mongoose.Schema({
+  todo: {
+    type: String,
+    required: true,
+    minLength: 4,
+  },
+  important: { type: Boolean, default: false },
+  isDone: { type: Boolean, default: false },
+  date: { type: Date, default: Date.now },
+});
+todoSchema.set("toJSON", {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString();
+    delete returnedObject._id;
+    delete returnedObject.__v;
+  },
+});
+
+const Todo = mongoose.model("Todo", todoSchema);
 
 const requestLogger = (req, res, next) => {
   console.log(`Path: --> ${req.path}`);
@@ -15,40 +48,38 @@ const requestLogger = (req, res, next) => {
 
 app.use(requestLogger);
 
-let todos = [
-  {
-    id: String(Math.floor(Math.random() * 1000)),
-    todo: "Go to market",
-    important: true,
-    isDone: true,
-    date: new Date(),
-  },
-];
-
 //GET
 app.get("/api/todos", (req, res) => {
-  res.json(todos);
+  Todo.find({})
+    .then((todos) => {
+      res.json(todos);
+    })
+    .catch((error) => {
+      next(error);
+    });
 });
 
 //POST
 app.post("/api/todos", (req, res) => {
   const body = req.body;
-  if (!body.todo) {
-    return res.status(400).json({
-      error: "Todo can't be empty",
-    });
-  }
 
-  const newTodo = {
-    id: String(Math.floor(Math.random() * 1000)),
-    todo: body.todo || false,
+  if (!body.todo) res.status(400).json({ error: "todo can not be empty" });
+
+  const newTodo = new Todo({
+    todo: body.todo,
     important: body.important || false,
     isDone: body.isDone || false,
-    date: body.date || new Date(),
-  };
+    date: new Date(),
+  });
 
-  todos = todos.concat(newTodo);
-  res.status(201).json(newTodo);
+  newTodo
+    .save()
+    .then((savedTodo) => {
+      res.status(201).json(savedTodo);
+    })
+    .catch((error) => {
+      next(error);
+    });
 });
 
 //DELETE
@@ -115,6 +146,6 @@ const errorHandler = (error, req, res, next) => {
 
 app.use(errorHandler);
 
-const PORT = 3001;
+const PORT = process.env.URL || 3001;
 
 app.listen(PORT, () => console.log(`Port started ${PORT}`));
