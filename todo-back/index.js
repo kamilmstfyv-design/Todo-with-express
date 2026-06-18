@@ -136,23 +136,24 @@ const unknownEndpoint = (req, res) => {
 };
 app.use(unknownEndpoint);
 
-// Error Handler - Tam təhlükəsiz versiya
 const errorHandler = (error, req, res, next) => {
-  console.error("Xəta baş verdi:", error.message);
+  // Bu sətir Render loglarında xətanın tam adını və səbəbini göstərəcək:
+  console.log(
+    "!!! DETALLI XƏTA REPORTOU !!! -> Name:",
+    error.name,
+    "| Message:",
+    error.message,
+  );
 
   if (error.name === "CastError") {
-    return res.status(400).json({ error: "malformatted id" });
-  } else if (error.name === "ValidationError") {
-    return res.status(400).json({ error: error.message });
+    return res.status(400).json({
+      error: "malformatted id",
+      details: error.message, // Xətanın daxili səbəbini frontend-ə də göndəririk
+    });
   }
 
-  // Əgər yuxarıdakı şərtlərə uymayan başqa bir xəta olarsa,
-  // serverin donub qalmamağı üçün mütləq brauzerə 500 cavabı qaytarırıq
-  res
-    .status(500)
-    .json({ error: "Server daxili xəta baş verdi: " + error.message });
+  res.status(500).json({ error: error.message });
 };
-
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
