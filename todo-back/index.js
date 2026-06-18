@@ -137,22 +137,23 @@ const unknownEndpoint = (req, res) => {
 app.use(unknownEndpoint);
 
 const errorHandler = (error, req, res, next) => {
-  // Bu sətir Render loglarında xətanın tam adını və səbəbini göstərəcək:
-  console.log(
-    "!!! DETALLI XƏTA REPORTOU !!! -> Name:",
-    error.name,
-    "| Message:",
-    error.message,
-  );
+  console.log(error.message);
 
+  // 1. ID formatı səhv olduqda (Məsələn: /api/todos/123)
   if (error.name === "CastError") {
     return res.status(400).json({
       error: "malformatted id",
-      details: error.message, // Xətanın daxili səbəbini frontend-ə də göndəririk
     });
   }
 
-  res.status(500).json({ error: error.message });
+  // 2. Şərt mətni ödənmədikdə (Məsələn: minLength: 4 xətası)
+  else if (error.name === "ValidationError") {
+    return res.status(400).json({
+      error: error.message, // Burada bazanın qaytardığı dəqiq xətanı frontend-ə göndəririk
+    });
+  }
+
+  next(error);
 };
 app.use(errorHandler);
 
