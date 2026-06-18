@@ -49,7 +49,7 @@ const requestLogger = (req, res, next) => {
 app.use(requestLogger);
 
 //GET
-app.get("/api/todos", (req, res) => {
+app.get("/api/todos", (req, res, next) => {
   Todo.find({})
     .then((todos) => {
       res.json(todos);
