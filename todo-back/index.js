@@ -85,50 +85,50 @@ app.post("/api/todos", (req, res, next) => {
 });
 
 //DELETE
-app.delete("/api/todos/:id", (req, res) => {
-  const id = req.params.id;
-  const findedItem = todos.find((todo) => todo.id === id);
+// app.delete("/api/todos/:id", (req, res) => {
+//   const id = req.params.id;
+//   const findedItem = todos.find((todo) => todo.id === id);
 
-  if (!findedItem) {
-    return res.status(404).json({
-      error: "id not found",
-    });
-  }
-  todos = todos.filter((todo) => todo.id !== id);
-  res.status(204).end();
-});
+//   if (!findedItem) {
+//     return res.status(404).json({
+//       error: "id not found",
+//     });
+//   }
+//   todos = todos.filter((todo) => todo.id !== id);
+//   res.status(204).end();
+// });
 
-//PUT
-app.put("/api/todos/:id", (req, res) => {
-  const id = req.params.id;
-  const body = req.body;
+// //PUT
+// app.put("/api/todos/:id", (req, res) => {
+//   const id = req.params.id;
+//   const body = req.body;
 
-  if (!body.todo) {
-    return res.status(400).json({
-      error: "Todo can't be empty",
-    });
-  }
+//   if (!body.todo) {
+//     return res.status(400).json({
+//       error: "Todo can't be empty",
+//     });
+//   }
 
-  const findedIndex = todos.findIndex((todo) => +todo.id === +id);
-  if (findedIndex === -1) {
-    return res.status(404).json({
-      error: "Todo not found",
-    });
-  }
+//   const findedIndex = todos.findIndex((todo) => +todo.id === +id);
+//   if (findedIndex === -1) {
+//     return res.status(404).json({
+//       error: "Todo not found",
+//     });
+//   }
 
-  const updatedTodo = {
-    ...todos[findedIndex],
-    todo: body.todo,
-    important:
-      body.important !== undefined
-        ? body.important
-        : todos[findedIndex].important,
-    isDone: body.isDone !== undefined ? body.isDone : todos[findedIndex].isDone,
-  };
+//   const updatedTodo = {
+//     ...todos[findedIndex],
+//     todo: body.todo,
+//     important:
+//       body.important !== undefined
+//         ? body.important
+//         : todos[findedIndex].important,
+//     isDone: body.isDone !== undefined ? body.isDone : todos[findedIndex].isDone,
+//   };
 
-  todos[findedIndex] = updatedTodo;
-  res.status(200).json(updatedTodo);
-});
+//   todos[findedIndex] = updatedTodo;
+//   res.status(200).json(updatedTodo);
+// });
 
 //unknownEndpoint
 const unknownEndpoint = (req, res) => {
@@ -148,6 +148,6 @@ const errorHandler = (error, req, res, next) => {
 
 app.use(errorHandler);
 
-const PORT = process.env.URL || 3001;
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => console.log(`Port started ${PORT}`));
