@@ -1,10 +1,31 @@
 import TodoCard from "./TodoCard";
 
-const TodoList = ({ todos }) => {
+const TodoList = ({
+  todos,
+  handleIsDone,
+  handleDeleteTodo,
+  isEdit,
+  handleEditClick,
+  setIsEdit,
+  handleSaveClick,
+  changedTodoNote,
+  setChangedTodoNote,
+}) => {
   return (
     <>
-      {todos.map((todo) => (
-        <TodoCard todo={todo.todo} key={todo.id} />
+      {todos.map((item) => (
+        <TodoCard
+          item={item}
+          key={item.id}
+          handleIsDone={handleIsDone}
+          handleDeleteTodo={handleDeleteTodo}
+          isEdit={isEdit}
+          setIsEdit={setIsEdit}
+          handleEditClick={handleEditClick}
+          changedTodoNote={changedTodoNote}
+          setChangedTodoNote={setChangedTodoNote}
+          handleSaveClick={handleSaveClick}
+        />
       ))}
     </>
   );
