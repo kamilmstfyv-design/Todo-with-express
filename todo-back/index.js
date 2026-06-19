@@ -1,54 +1,13 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
+const Todo = require("./models/todo");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static("dist"));
 
-mongoose.set("strictQuery", false);
-
-mongoose
-  .connect(process.env.MONGODB_URI, { family: 4 })
-  .then(() => {
-    console.log("connected succes");
-  })
-  .catch((error) => {
-    console.log(error, "somethink wrong");
-  });
-
-const todoSchema = new mongoose.Schema({
-  todo: {
-    type: String,
-    required: true,
-    minLength: 4,
-  },
-  important: { type: Boolean, default: false },
-  isDone: { type: Boolean, default: false },
-  date: { type: Date, default: Date.now },
-});
-todoSchema.set("toJSON", {
-  transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString();
-    delete returnedObject._id;
-    delete returnedObject.__v;
-  },
-});
-
-const Todo = mongoose.model("Todo", todoSchema);
-
-const requestLogger = (req, res, next) => {
-  console.log(`Path: --> ${req.path}`);
-  console.log(`Method: --> ${req.method}`);
-  console.log("Body -->", req.body);
-  next();
-};
-
-app.use(requestLogger);
-
-//GET
 app.get("/api/todos", (req, res, next) => {
   Todo.find({})
     .then((todos) => {
@@ -59,21 +18,31 @@ app.get("/api/todos", (req, res, next) => {
     });
 });
 
-//POST
+app.get("/api/todos/:id", (req, res, next) => {
+  Todo.findById(req.params.id)
+    .then((todo) => {
+      if (!todo) {
+        return res.status(404).json({ error: "no todo " });
+      }
+      res.json(todo);
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+
 app.post("/api/todos", (req, res, next) => {
   const body = req.body;
-
   if (!body.todo) {
-    return res.status(400).json({ error: "todo can not be empty" });
+    return res.status(400).json({
+      error: "Todo Can not be empty",
+    });
   }
-
   const newTodo = new Todo({
     todo: body.todo,
-    important: body.important || false,
     isDone: body.isDone || false,
-    date: new Date(),
+    important: body.important || false,
   });
-
   newTodo
     .save()
     .then((savedTodo) => {
@@ -84,79 +53,77 @@ app.post("/api/todos", (req, res, next) => {
     });
 });
 
-//DELETE
-// app.delete("/api/todos/:id", (req, res) => {
-//   const id = req.params.id;
-//   const findedItem = todos.find((todo) => todo.id === id);
+app.delete("/api/todos/:id", (req, res, next) => {
+  Todo.findByIdAndDelete(req.params.id)
+    .then((todo) => {
+      if (!todo) {
+        return res.status(404).json({
+          error: "Content already deleted from database",
+        });
+      }
+      res.status(204).end();
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
 
-//   if (!findedItem) {
-//     return res.status(404).json({
-//       error: "id not found",
-//     });
-//   }
-//   todos = todos.filter((todo) => todo.id !== id);
-//   res.status(204).end();
-// });
+app.put("/api/todos/:id", (req, res, next) => {
+  const body = req.body;
 
-// //PUT
-// app.put("/api/todos/:id", (req, res) => {
-//   const id = req.params.id;
-//   const body = req.body;
+  if (!body.todo) {
+    return res.status(400).json({
+      error: "todo cannot be empty",
+    });
+  }
 
-//   if (!body.todo) {
-//     return res.status(400).json({
-//       error: "Todo can't be empty",
-//     });
-//   }
+  const updatedTodo = {
+    todo: body.todo,
+    isDone: body.isDone,
+    important: body.important,
+  };
+  Todo.findByIdAndUpdate(req.params.id, updatedTodo, {
+    new: true,
+    runValidators: true,
+  })
+    .then((updatedTodo) => {
+      if (!updatedTodo) {
+        return res.status(404).json({
+          error: " TODO NOT FOUND",
+        });
+      }
+      res.status(200).json(updatedTodo);
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
 
-//   const findedIndex = todos.findIndex((todo) => +todo.id === +id);
-//   if (findedIndex === -1) {
-//     return res.status(404).json({
-//       error: "Todo not found",
-//     });
-//   }
-
-//   const updatedTodo = {
-//     ...todos[findedIndex],
-//     todo: body.todo,
-//     important:
-//       body.important !== undefined
-//         ? body.important
-//         : todos[findedIndex].important,
-//     isDone: body.isDone !== undefined ? body.isDone : todos[findedIndex].isDone,
-//   };
-
-//   todos[findedIndex] = updatedTodo;
-//   res.status(200).json(updatedTodo);
-// });
-
-//unknownEndpoint
 const unknownEndpoint = (req, res) => {
-  res.status(404).send({ error: "unknown endpoint" });
+  res.status(404).json({
+    error: "unknown enpoint",
+  });
 };
+
 app.use(unknownEndpoint);
 
 const errorHandler = (error, req, res, next) => {
-  console.log(error.message);
+  console.error(error.message);
 
-  // 1. ID formatı səhv olduqda (Məsələn: /api/todos/123)
   if (error.name === "CastError") {
-    return res.status(400).json({
-      error: "malformatted id",
-    });
+    return res.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return res.status(400).json({ error: error.message });
   }
-
-  // 2. Şərt mətni ödənmədikdə (Məsələn: minLength: 4 xətası)
-  else if (error.name === "ValidationError") {
-    return res.status(400).json({
-      error: error.message, // Burada bazanın qaytardığı dəqiq xətanı frontend-ə göndəririk
-    });
-  }
-
-  next(error);
+  return res.status(500).json({
+    error: "Internal Server Error",
+    message: error.message,
+  });
 };
+
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, () => console.log(`Port started ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Port:${PORT}`);
+});
