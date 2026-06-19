@@ -37,7 +37,7 @@ const App = () => {
   };
 
   const handleIsDone = (id) => {
-    const findedTodoIndex = todos.findIndex((todo) => +todo.id === +id);
+    const findedTodoIndex = todos.findIndex((todo) => todo.id === id);
     if (findedTodoIndex === -1) {
       return;
     }
@@ -51,7 +51,7 @@ const App = () => {
       .then((updatedData) => {
         setTodos((prevTodos) =>
           prevTodos.map((prevTodo) =>
-            +prevTodo.id === +id ? updatedData : prevTodo,
+            prevTodo.id === id ? updatedData : prevTodo,
           ),
         );
       })
@@ -64,7 +64,7 @@ const App = () => {
     deleteData(id)
       .then(() => {
         setTodos((prevTodos) =>
-          prevTodos.filter((prevTodo) => +prevTodo.id !== +id),
+          prevTodos.filter((prevTodo) => prevTodo.id !== id),
         );
       })
       .catch((error) => console.log(error));
@@ -72,7 +72,7 @@ const App = () => {
 
   const handleEditClick = (id) => {
     setIsEdit(id);
-    const fiterTodo = todos.find((todo) => +todo.id === +id);
+    const fiterTodo = todos.find((todo) => todo.id === id);
     setChangedTodoNote(fiterTodo.todo);
   };
 
@@ -80,7 +80,7 @@ const App = () => {
     if (!changedTodoNote.trim()) {
       return alert("Todo can not be empty");
     }
-    const findedIndex = todos.findIndex((todo) => +todo.id === +id);
+    const findedIndex = todos.findIndex((todo) => todo.id === id);
     if (findedIndex === -1) return;
 
     const editedTodo = {
@@ -92,7 +92,7 @@ const App = () => {
       .then((updatedTodo) => {
         setTodos((prevTodos) =>
           prevTodos.map((prevtodo) =>
-            +prevtodo.id === +id ? updatedTodo : prevtodo,
+            prevtodo.id === id ? updatedTodo : prevtodo,
           ),
         );
         setIsEdit(null);
